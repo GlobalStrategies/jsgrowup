@@ -48,7 +48,16 @@ class Observation {
             const scores = table[closestHeight.toString()];
             return scores;
         }
-        return table;
+        // all other indicators
+        if (this.ageInWeeks <= 13) {
+            const closestWeek = Math.floor(this.ageInWeeks);
+            const scores = table[closestWeek.toString()];
+            return scores;
+        }
+        // all other ages
+        const closestMonth = Math.floor(this.ageInMonths);
+        const scores = table[closestMonth.toString()];
+        return scores;
     }
 
     ageInWeeks() {
