@@ -32,12 +32,16 @@ class Observation {
         this.tableAge = null;
         this.tableSex = null;
 
-        // TODO: missing height check
+        if ([WEIGHT_FOR_HEIGHT, WEIGHT_FOR_LENGTH].includes(this.indicator)) {
+            if (!height || height === '') {
+                throw new Error('no length or height');
+            }
+        }
     }
 
     getZScores(calculator) {
         const tableName = this.tableNameForObservation();
-        const table = calculator.whoTables[tableName];
+        const table = calculator.tables[tableName];
         if ([WEIGHT_FOR_HEIGHT, WEIGHT_FOR_LENGTH].includes(this.indicator)) {
             if (!this.height) { throw new Error('NO HEIGHT'); }
             if (this.height < 45) { throw new Error('too short'); }
@@ -129,7 +133,7 @@ class Observation {
     }
 }
 
-function buildWhoTablesObject() {
+function buildTablesObject(includeCdc = false) {
     /*
     # WHO Growth Standards
     # http://www.who.int/childgrowth/standards/en/
@@ -162,32 +166,35 @@ function buildWhoTablesObject() {
     return Promise.all(R.map(loadWhoFiles, whoTableNames))
             .then(R.map(reIndex))
             .then(R.zipObj(whoTableNames))
-            .then((data) => data);
-}
+            .then((data) => {
+                if (includeCdc) {
+                    /*
+                    # CDC growth standards
+                    # http://www.cdc.gov/growthcharts/
+                    # CDC csv files have been converted to JSON, and the third standard
+                    # deviation has been fudged for the purpose of this tool.
+                    */
+                    const cdcTableNames = [
+                        'lhfa_boys_2_20',
+                        'lhfa_girls_2_20',
+                        'wfa_boys_2_20',
+                        'wfa_girls_2_20',
+                        'bmifa_boys_2_20',
+                        'bmifa_girls_2_20'];
 
-function buildCdcTablesObject() {
-    /*
-    # CDC growth standards
-    # http://www.cdc.gov/growthcharts/
-    # CDC csv files have been converted to JSON, and the third standard
-    # deviation has been fudged for the purpose of this tool.
-    */
-
-    const cdcTableNames = [
-        'lhfa_boys_2_20',
-        'lhfa_girls_2_20',
-        'wfa_boys_2_20',
-        'wfa_girls_2_20',
-        'bmifa_boys_2_20',
-        'bmifa_girls_2_20'];
-
-    const getCdcFilePath = tableName => `./tables/${tableName}_zscores.cdc.json`;
-    const loadCdcFiles = R.pipe(getCdcFilePath, R.pipeP(fs.readFile, JSON.parse));
-
+                    const getCdcFilePath = tableName => `./tables/${tableName}_zscores.cdc.json`;
+                    const loadCdcFiles = R.pipe(getCdcFilePath, R.pipeP(fs.readFile, JSON.parse));
+                    return Promise.all(R.map(loadCdcFiles, cdcTableNames))
+                            .then(R.map(reIndex))
+                            .then(R.zipObj(cdcTableNames))
+                            .then((cdcData) => R.merge(data, cdcData));
+                }
+                return data;
+            });
 }
 
 class Calculator {
-    constructor(adjustHeightData = false, adjustWeightScores = false, whoTables = null, cdcTables = null) {
+    constructor(adjustHeightData = false, adjustWeightScores = false, tables = null) {
         /*
         # Height adjustments are part of the WHO specification
         # (to correct for recumbent vs standing measurements),
@@ -212,8 +219,8 @@ class Calculator {
         */
         this.adjustWeightScores = adjustWeightScores;
 
-        this.whoTables = whoTables;
-        this.cdcTables = cdcTables;
+        this.tables = tables;
+        if (!tables) { throw new Error('No data found'); }
     }
 }
 
@@ -231,8 +238,7 @@ module.exports = {
     AGE_2_20,
     SEX_BOYS,
     SEX_GIRLS,
-    buildWhoTablesObject,
-    buildCdcTablesObject,
+    buildTablesObject,
     Calculator,
     Observation
 };
