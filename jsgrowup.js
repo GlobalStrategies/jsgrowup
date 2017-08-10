@@ -4,9 +4,9 @@ const fs = require('fs-extra');
 
 const WEIGHT_FOR_LENGTH = 'wfl';
 const WEIGHT_FOR_HEIGHT = 'wfh';
+const WEIGHT_FOR_AGE = 'wfa';
 const LENGTH_HEIGHT_FOR_AGE = 'lhfa';
 const HEAD_CIRC_FOR_AGE = 'hcfa';
-const WEIGHT_FOR_AGE = 'wfa';
 const BODY_MASS_INDEX_FOR_AGE = 'bmifa';
 
 const AGE_0_2 = '0_2';
@@ -17,6 +17,8 @@ const AGE_2_20 = '2_20';
 
 const SEX_BOYS = 'boys';
 const SEX_GIRLS = 'girls';
+
+// OBSERVATION CLASS
 
 class Observation {
     constructor(indicator, measurement, ageInMonths, sex, height, american) {
@@ -193,6 +195,8 @@ function buildTablesObject(includeCdc = false) {
             });
 }
 
+// CALCULATOR CLASS
+
 class Calculator {
     constructor(adjustHeightData = false, adjustWeightScores = false, tables = null) {
         /*
@@ -222,14 +226,163 @@ class Calculator {
         this.tables = tables;
         if (!tables) { throw new Error('No data found'); }
     }
+
+    zscoreForMeasurement(indicator, measurement, ageInMonths, sex, height = null, american = false) {
+        if (!sex || (!['M', 'F', 'm', 'f'].includes(sex))) { throw new Error('Invalid sex value'); }
+        if (!ageInMonths || parseInt(ageInMonths, 10) === 0) { throw new Error('Invalid age'); }
+        if (!indicator || (![WEIGHT_FOR_LENGTH, WEIGHT_FOR_HEIGHT, LENGTH_HEIGHT_FOR_AGE, 
+            HEAD_CIRC_FOR_AGE, WEIGHT_FOR_AGE, BODY_MASS_INDEX_FOR_AGE].includes(indicator))) { 
+                throw new Error('Invalid indicator'); 
+            }
+        if (!measurement || parseInt(measurement, 10) === 0) { 
+            throw new Error('Invalid measurement'); 
+        }
+
+        const obs = new Observation(indicator, measurement, ageInMonths, sex, height, american);
+        let m = measurement;
+
+        /*
+        # indicator-specific methodology
+        # (see section 5.1 of http://www.who.int/entity/childgrowth/standards/\
+        #                                  technical_report/en/index.html)
+        #
+        # TODO accept a recumbent vs standing parameter for deciding
+        # whether or not to do these adjustments rather than assuming
+        # measurement orientation based on the measurement
+        */
+        if (indicator === WEIGHT_FOR_LENGTH) {
+            if (m > 65.7 && m < 120.7) { m -= 0.7; }
+        }
+        if (indicator === WEIGHT_FOR_HEIGHT && this.adjustHeightData) {
+            m += 0.7;
+        }
+
+        const zscores = obs.getZScores(this);
+        if (!zscores) { throw new Error('Data error'); }
+
+        const y = new D(m);
+        const boxCox = new D(zscores.L);
+        const median = new D(zscores.M);
+        const coeffVariance = new D(zscores.S);
+
+        /*
+        ###
+        # calculate z-score
+        #
+        # (see Chapter 7 of http://www.who.int/entity/childgrowth/standards/\
+        #                                  technical_report/en/index.html)
+        #
+        #           [y/M(t)]^L(t) - 1
+        #   Zind =  -----------------
+        #               S(t)L(t)
+        ###
+        */
+        const base = y.dividedBy(median);
+        console.log(`${y} ÷ ${median} = ${base}`);
+        const power = base.pow(boxCox);
+        console.log(`${y} ** ${boxCox} = ${power}`);
+        const numerator = power.minus(1);
+        console.log(`${numerator}`);
+        const denominator = coeffVariance.times(boxCox);
+        console.log(`${denominator}`);
+        const zscore = numerator.dividedBy(denominator);
+        const roundedZscore = zscore.toDecimalPlaces(2).toNumber();
+        console.log(`zscore: ${roundedZscore}`);
+        if (!this.adjustWeightScores) {
+            return roundedZscore;
+        }
+        if ([LENGTH_HEIGHT_FOR_AGE, HEAD_CIRC_FOR_AGE, 
+            BODY_MASS_INDEX_FOR_AGE].includes(indicator)) {
+            /*
+            # return length/height-for-age (lhfa) without further processing
+            # L(t) is always 1 for this indicator, so differences between
+            # adjacent SDs (e.g., 2 SD and 3 SD) are constant for a specific
+            # age but varied at different ages
+            */
+            return roundedZscore;
+        }
+        if (Math.abs(roundedZscore) <= 3) {
+            return roundedZscore;
+        }
+        /*
+        # weight-based indicators present right-skewed distributions
+        # so use restricted application of LMS method (limiting Box-Cox
+        # normal distribution to interval corresponding to z-scores where
+        # empirical data are available. z-scores beyond +/- 3 SDs are
+        # fixed to the distance between +/- 2 SDs and +/- 3 SD
+        # this avoids making assumptions about the distribution of data
+        # beyond the limits of observed values
+        #
+        #            _
+        #           |
+        #           |       Zind            if |Zind| <= 3
+        #           |
+        #           |
+        #           |       y - SD3pos
+        #   Zind* = | 3 + ( ----------- )   if Zind > 3
+        #           |         SD23pos
+        #           |
+        #           |
+        #           |
+        #           |        y - SD3neg
+        #           | -3 + ( ----------- )  if Zind < -3
+        #           |          SD23neg
+        #           |
+        #           |_
+        */
+        function calcStdDev(sd) {
+            /*
+            #   e.g.,
+            #
+            #   SD3neg = M(t)[1 + L(t) * S(t) * (-3)]^ 1/L(t)
+            #   SD2pos = M(t)[1 + L(t) * S(t) * (2)]^ 1/L(t)
+            #
+            ###
+            */
+            const sdbase = boxCox.times(coeffVariance).times(new D(sd)).plus(1);
+            const sdexponent = new D(1).dividedBy(boxCox);
+            const sdpower = sdbase.pow(sdexponent);
+            return median.times(sdpower);
+        }
+
+        if (roundedZscore > 3) {
+            console.log('zscore > 3');
+            const sd2pos_c = calcStdDev(2);
+            const sd3pos_c = calcStdDev(3);
+
+            const sd23dist = sd3pos_c - sd2pos_c;
+
+            //# compute final z-score
+            //# zscore = D(3) + ((y - SD3pos_c)/SD23dist)
+            const sub = y.minus(sd3pos_c);
+            const div = sub.dividedBy(sd23dist);
+            const revisedZscore = div.plus(3);
+            return revisedZscore.toDecimalPlaces(2).toNumber();
+        }
+
+        if (roundedZscore < -3) {
+            console.log('zscore < -3');
+            const sd2neg_c = calcStdDev(-2);
+            const sd3neg_c = calcStdDev(-3);
+
+            const sd23dist = sd2neg_c - sd3neg_c;
+
+            //# compute final z-score
+            //# zscore = D(-3) + ((y - SD3neg_c)/SD23dist)
+            const sub = y.minus(sd3neg_c);
+            const div = sub.dividedBy(sd23dist);
+            const revisedZscore = div.minus(3);
+            return revisedZscore.toDecimalPlaces(2).toNumber();
+        }
+    }
 }
 
 module.exports = {
     WEIGHT_FOR_LENGTH,
     WEIGHT_FOR_HEIGHT,
+    WEIGHT_FOR_AGE,
     LENGTH_HEIGHT_FOR_AGE,
     HEAD_CIRC_FOR_AGE,
-    WEIGHT_FOR_AGE,
     BODY_MASS_INDEX_FOR_AGE,
     AGE_0_2,
     AGE_2_5,
