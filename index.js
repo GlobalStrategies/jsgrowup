@@ -1,8 +1,13 @@
-const jsgrowup = require('./jsgrowup');
+const g = require('./jsgrowup');
 const D = require('decimal.js');
+const R = require('ramda');
 
-const input = process.argv[2];
+const fs = require('fs-extra');
 
-const rounded = (Math.round(D(input) / D(0.5))) * D(0.5);
+g.buildWhoTablesObject().then((data) => {
+  const calc = new g.Calculator(false, false, data);
+  const obs = new g.Observation(g.WEIGHT_FOR_HEIGHT, null, 1, 'F', 80.4, true);
+  console.log(obs.tableNameForObservation());
+  console.log(obs.getZScores(calc));
+});
 
-console.log(`${D(input)} -> ${rounded.toString()}`);

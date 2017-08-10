@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "decimal.js": "^7.2.3",
+    "fs-extra": "^4.0.1",
     "ramda": "^0.24.1"
   },
   "devDependencies": {
