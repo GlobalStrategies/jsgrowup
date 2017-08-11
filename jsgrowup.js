@@ -1,3 +1,9 @@
+// jsgrowup: z-score calculation for anthropometric indicators
+// Adapted from pygrowup; BSD license
+// Can be used to detect malnutrition, among other applications
+// http://www.unhcr.org/45f6abc92.pdf
+// Version 0.8.0
+
 const D = require('decimal.js');
 const R = require('ramda');
 const fs = require('fs-extra');
