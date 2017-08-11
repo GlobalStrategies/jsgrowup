@@ -1,11 +1,17 @@
-const g = require('./jsgrowup');
-const D = require('decimal.js');
-const R = require('ramda');
+const jsgrowup = require('./jsgrowup');
 
-const fs = require('fs-extra');
+jsgrowup.buildTablesObject().then((data) => {
+  const adjustHeightData = false;
+  const adjustWeightScores = false;
+  const calc = new jsgrowup.Calculator(adjustHeightData, adjustWeightScores, data);
 
-g.buildTablesObject().then((data) => {
-  const calc = new g.Calculator(false, false, data);
-  console.log(calc.zscoreForMeasurement(g.WEIGHT_FOR_LENGTH, 15, 15, 'm', 50));
+  const indicator = jsgrowup.WEIGHT_FOR_AGE;
+  const measurement = 10.4;
+  const ageInMonths = 22.45;
+  const gender = 'F';
+  const height = 84.8;
+  const american = false;
+  console.log('zscore: ' + 
+    `${calc.zscoreForMeasurement(indicator, measurement, ageInMonths, gender, height, american)}`);
 });
 

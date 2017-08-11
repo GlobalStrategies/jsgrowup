@@ -42,7 +42,7 @@ class Observation {
     }
 
     getZScores(calculator) {
-        const tableName = this.tableNameForObservation();
+        const tableName = this.tableNameForObservation;
         const table = calculator.tables[tableName];
         if ([WEIGHT_FOR_HEIGHT, WEIGHT_FOR_LENGTH].includes(this.indicator)) {
             if (!this.height) { throw new Error('NO HEIGHT'); }
@@ -66,11 +66,11 @@ class Observation {
         return scores;
     }
 
-    ageInWeeks() {
+    get ageInWeeks() {
         return ((this.ageInMonths * 30.4374) / 7);
     }
 
-    tableNameForObservation() {
+    get tableNameForObservation() {
         /* Choose a WHO/CDC table to use, making adjustments
         based on age, length, or height. If, for example, the
         indicator is set to wfl while the child is too long for
@@ -82,11 +82,11 @@ class Observation {
 
         if ([WEIGHT_FOR_HEIGHT, WEIGHT_FOR_LENGTH].includes(this.indicator)) {
             if (this.indicator === WEIGHT_FOR_LENGTH && this.height > 86) {
-                console.log('too long for recumbent');
+                // console.log('too long for recumbent');
                 this.tableIndicator = WEIGHT_FOR_HEIGHT;
                 this.tableAge = AGE_2_5;
             } else if (this.indicator === WEIGHT_FOR_HEIGHT && this.height < 65) {
-                console.log('too short for standing');
+                // console.log('too short for standing');
                 this.tableIndicator = WEIGHT_FOR_LENGTH;
                 this.tableAge = AGE_0_2;
             } else {
@@ -101,7 +101,7 @@ class Observation {
             this.tableIndicator = this.indicator;
             this.tableAge = AGE_0_5;
             if (this.ageInMonths <= 3) {
-                if (this.ageInWeeks() <= 13) {
+                if (this.ageInWeeks <= 13) {
                     this.tableAge = AGE_0_13;
                 }
             }
@@ -113,7 +113,7 @@ class Observation {
             }
         } else if (this.indicator === BODY_MASS_INDEX_FOR_AGE) {
             this.tableIndicator = this.indicator;
-            if (this.ageInMonths <= 3 && this.ageInWeeks() <= 13) {
+            if (this.ageInMonths <= 3 && this.ageInWeeks <= 13) {
                 this.tableAge = AGE_0_13;
             } else if (this.ageInMonths < 24) {
                 this.tableAge = AGE_0_2;
@@ -227,7 +227,8 @@ class Calculator {
         if (!tables) { throw new Error('No data found'); }
     }
 
-    zscoreForMeasurement(indicator, measurement, ageInMonths, sex, height = null, american = false) {
+    zscoreForMeasurement(indicator, measurement, ageInMonths, sex, height = null, 
+        american = false) {
         if (!sex || (!['M', 'F', 'm', 'f'].includes(sex))) { throw new Error('Invalid sex value'); }
         if (!ageInMonths || parseInt(ageInMonths, 10) === 0) { throw new Error('Invalid age'); }
         if (!indicator || (![WEIGHT_FOR_LENGTH, WEIGHT_FOR_HEIGHT, LENGTH_HEIGHT_FOR_AGE, 
@@ -239,7 +240,7 @@ class Calculator {
         }
 
         const obs = new Observation(indicator, measurement, ageInMonths, sex, height, american);
-        let m = measurement;
+        let m = parseFloat(measurement, 10);
 
         /*
         # indicator-specific methodology
@@ -278,16 +279,16 @@ class Calculator {
         ###
         */
         const base = y.dividedBy(median);
-        console.log(`${y} ÷ ${median} = ${base}`);
+        // console.log(`${y} ÷ ${median} = ${base}`);
         const power = base.pow(boxCox);
-        console.log(`${y} ** ${boxCox} = ${power}`);
+        // console.log(`${y} ** ${boxCox} = ${power}`);
         const numerator = power.minus(1);
-        console.log(`${numerator}`);
+        // console.log(`${numerator}`);
         const denominator = coeffVariance.times(boxCox);
-        console.log(`${denominator}`);
+        // console.log(`${denominator}`);
         const zscore = numerator.dividedBy(denominator);
         const roundedZscore = zscore.toDecimalPlaces(2).toNumber();
-        console.log(`zscore: ${roundedZscore}`);
+        // console.log(`zscore: ${roundedZscore}`);
         if (!this.adjustWeightScores) {
             return roundedZscore;
         }
