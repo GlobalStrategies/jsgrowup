@@ -1,3 +1,5 @@
+'use strict';
+
 // jsgrowup: z-score calculation for anthropometric indicators
 // Adapted from pygrowup; BSD license
 // Can be used to detect malnutrition, among other applications
@@ -101,7 +103,7 @@ class Observation {
                 if (this.tableIndicator === WEIGHT_FOR_HEIGHT) { this.tableAge = AGE_2_5; }
             }
         } else if ([WEIGHT_FOR_AGE, LENGTH_HEIGHT_FOR_AGE, HEAD_CIRC_FOR_AGE].includes(
-                    this.indicator)) {
+            this.indicator)) {
             /* weight for age has only one table per sex, as does head circumference for age
             and CDC goes unused before 24mos */
             this.tableIndicator = this.indicator;
@@ -161,7 +163,7 @@ function buildTablesObject(includeCdc = false) {
         'bmifa_boys_0_2', 'bmifa_girls_0_2',
         'bmifa_boys_2_5', 'bmifa_girls_2_5'];
 
-    const getWhoFilePath = tableName => `./tables/${tableName}_zscores.json`;
+    const getWhoFilePath = tableName => `${__dirname}/tables/${tableName}_zscores.json`;
     const loadWhoFiles = R.pipe(getWhoFilePath, R.pipeP(fs.readFile, JSON.parse));
 
     const allowedIndexKeys = ['Length', 'Height', 'Month', 'Week'];
@@ -172,33 +174,33 @@ function buildTablesObject(includeCdc = false) {
 
     // reindex all
     return Promise.all(R.map(loadWhoFiles, whoTableNames))
-            .then(R.map(reIndex))
-            .then(R.zipObj(whoTableNames))
-            .then((data) => {
-                if (includeCdc) {
-                    /*
-                    # CDC growth standards
-                    # http://www.cdc.gov/growthcharts/
-                    # CDC csv files have been converted to JSON, and the third standard
-                    # deviation has been fudged for the purpose of this tool.
-                    */
-                    const cdcTableNames = [
-                        'lhfa_boys_2_20',
-                        'lhfa_girls_2_20',
-                        'wfa_boys_2_20',
-                        'wfa_girls_2_20',
-                        'bmifa_boys_2_20',
-                        'bmifa_girls_2_20'];
+        .then(R.map(reIndex))
+        .then(R.zipObj(whoTableNames))
+        .then((data) => {
+            if (includeCdc) {
+                /*
+                # CDC growth standards
+                # http://www.cdc.gov/growthcharts/
+                # CDC csv files have been converted to JSON, and the third standard
+                # deviation has been fudged for the purpose of this tool.
+                */
+                const cdcTableNames = [
+                    'lhfa_boys_2_20',
+                    'lhfa_girls_2_20',
+                    'wfa_boys_2_20',
+                    'wfa_girls_2_20',
+                    'bmifa_boys_2_20',
+                    'bmifa_girls_2_20'];
 
-                    const getCdcFilePath = tableName => `./tables/${tableName}_zscores.cdc.json`;
-                    const loadCdcFiles = R.pipe(getCdcFilePath, R.pipeP(fs.readFile, JSON.parse));
-                    return Promise.all(R.map(loadCdcFiles, cdcTableNames))
-                            .then(R.map(reIndex))
-                            .then(R.zipObj(cdcTableNames))
-                            .then((cdcData) => R.merge(data, cdcData));
-                }
-                return data;
-            });
+                const getCdcFilePath = tableName => `./tables/${tableName}_zscores.cdc.json`;
+                const loadCdcFiles = R.pipe(getCdcFilePath, R.pipeP(fs.readFile, JSON.parse));
+                return Promise.all(R.map(loadCdcFiles, cdcTableNames))
+                    .then(R.map(reIndex))
+                    .then(R.zipObj(cdcTableNames))
+                    .then((cdcData) => R.merge(data, cdcData));
+            }
+            return data;
+        });
 }
 
 // CALCULATOR CLASS
@@ -213,7 +215,7 @@ class Calculator {
         # by igrowup software
         */
         this.adjustHeightData = adjustHeightData;
-        
+
         /*
         # WHO specs include adjustments to z-scores of weight-based
         # indicators that are greater than +/- 3 SDs. These adjustments
@@ -233,16 +235,16 @@ class Calculator {
         if (!tables) { throw new Error('No data found'); }
     }
 
-    zscoreForMeasurement(indicator, measurement, ageInMonths, sex, height = null, 
+    zscoreForMeasurement(indicator, measurement, ageInMonths, sex, height = null,
         american = false) {
         if (!sex || (!['M', 'F', 'm', 'f'].includes(sex))) { throw new Error('Invalid sex value'); }
         if (!ageInMonths || parseInt(ageInMonths, 10) === 0) { throw new Error('Invalid age'); }
-        if (!indicator || (![WEIGHT_FOR_LENGTH, WEIGHT_FOR_HEIGHT, LENGTH_HEIGHT_FOR_AGE, 
-            HEAD_CIRC_FOR_AGE, WEIGHT_FOR_AGE, BODY_MASS_INDEX_FOR_AGE].includes(indicator))) { 
-                throw new Error('Invalid indicator'); 
-            }
-        if (!measurement || parseInt(measurement, 10) === 0) { 
-            throw new Error('Invalid measurement'); 
+        if (!indicator || (![WEIGHT_FOR_LENGTH, WEIGHT_FOR_HEIGHT, LENGTH_HEIGHT_FOR_AGE,
+            HEAD_CIRC_FOR_AGE, WEIGHT_FOR_AGE, BODY_MASS_INDEX_FOR_AGE].includes(indicator))) {
+            throw new Error('Invalid indicator');
+        }
+        if (!measurement || parseInt(measurement, 10) === 0) {
+            throw new Error('Invalid measurement');
         }
 
         const obs = new Observation(indicator, measurement, ageInMonths, sex, height, american);
@@ -298,7 +300,7 @@ class Calculator {
         if (!this.adjustWeightScores) {
             return roundedZscore;
         }
-        if ([LENGTH_HEIGHT_FOR_AGE, HEAD_CIRC_FOR_AGE, 
+        if ([LENGTH_HEIGHT_FOR_AGE, HEAD_CIRC_FOR_AGE,
             BODY_MASS_INDEX_FOR_AGE].includes(indicator)) {
             /*
             # return length/height-for-age (lhfa) without further processing
