@@ -61,8 +61,8 @@ as well as more specific errors (all subclasses of `RuntimeError`):
 TESTING
 =======
 
-simple test script, not using any framework:
-`node tests.js`
+simple test script using vows:
+`node test.js`
 
 the included tests use example anthropometric data taken from
 demonstration data shipped with WHO's igrowup software.
@@ -72,10 +72,10 @@ please see the sofware licence agreement for WHO's igrowup, which
 is the source of the test data files:
 http://www.who.int/childgrowth/software/license2.pdf
 
-currently, 3 cases fail to produce results within 1 standard deviation
-of the WHO resuts. I believe these discrepencies are due to WHO's use
-of floating point arithmetic in their igrowup software, which leads to less
-precise calculations compared to jsgrowup. In the absence of any other
+currently, a small number of cases fail to produce results within 1 standard
+deviation of the WHO resuts. I believe these discrepencies are due to WHO's
+use of floating point arithmetic in their igrowup software, which leads to
+less precise calculations compared to jsgrowup. In the absence of any other
 trusted test data, please be aware that no claims are made to the
 accuracy or reliability of jsgrowup's calculations.
 

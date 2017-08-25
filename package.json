@@ -1,20 +1,22 @@
 {
   "name": "jsgrowup",
   "version": "0.8.0",
-  "description": "Calculate z-scores of anthropometric measurements based on WHO and CDC child growth standards; translation of pygrowup by Evan Wheeler",
+  "description": "Calculate z-scores of anthropometric measurements based on WHO and CDC child growth standards; translation of pygrowup",
   "main": "jsgrowup.js",
   "scripts": {
-    "test": "node tests.js"
+    "test": "node test.js"
   },
   "author": "Elon Danziger <elon.danziger@globalstrategies.org> (http://globalstrategies.org)",
-  "license": "BSD",
+  "license": "BSD-3-Clause",
   "dependencies": {
     "csvtojson": "^1.1.7",
     "decimal.js": "^7.2.3",
     "fs-extra": "^4.0.1",
-    "ramda": "^0.24.1"
+    "ramda": "^0.24.1",
+    "vows": "^0.8.1"
   },
   "devDependencies": {
-    "eslint-config-rallycoding": "^3.2.0"
+    "eslint-config-rallycoding": "^3.2.0",
+    "minimatch": "^3.0.2"
   }
 }

@@ -1,7 +1,9 @@
+// SIMPLE TESTING (no framework, just console output)
+
 const g = require('./jsgrowup');
 const csv = require('csvtojson');
 
-const LONG_OUTPUT = false;
+const LONG_OUTPUT = true;
 let tables = null;
 
 class WhoResult {
@@ -46,7 +48,7 @@ class WhoResult {
             return this.weight;
         }
         if (this.indicator === g.BODY_MASS_INDEX_FOR_AGE) {
-            return this.cbmi;
+            return this._cbmi;
         }
     }
 
