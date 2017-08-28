@@ -3,7 +3,7 @@ jsgrowup
 
 [![Build Status](https://travis-ci.org/elon-gs/jsgrowup.svg?branch=master)](https://travis-ci.org/elon-gs/jsgrowup.svg?branch=master)
 
-jsgrowup is based on pygrowup by Evan Wheeler:
+jsgrowup by Global Strategies is based on pygrowup by Evan Wheeler:
 https://github.com/ewheeler/pygrowup
 
 jsgrowup calculates z-scores for the following anthropometric indicators:
