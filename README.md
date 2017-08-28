@@ -1,6 +1,7 @@
-========
 jsgrowup
 ========
+
+https://travis-ci.org/elon-gs/jsgrowup.svg?branch=master
 
 jsgrowup is based on pygrowup by Evan Wheeler:
 https://github.com/ewheeler/pygrowup
