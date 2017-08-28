@@ -3,10 +3,10 @@ jsgrowup
 
 [![Build Status](https://travis-ci.org/elon-gs/jsgrowup.svg?branch=master)](https://travis-ci.org/elon-gs/jsgrowup.svg?branch=master)
 
-jsgrowup by Global Strategies is based on pygrowup by Evan Wheeler:
+`jsgrowup` by Global Strategies is based on pygrowup by Evan Wheeler:
 https://github.com/ewheeler/pygrowup
 
-jsgrowup calculates z-scores for the following anthropometric indicators:
+`jsgrowup` calculates z-scores for the following anthropometric indicators:
 
 * weight-for-age
 
@@ -25,8 +25,8 @@ based on the WHO Child Growth Standards:
 and can optionally use CDC growth standards:
 * http://www.cdc.gov/growthcharts
 
-jsgrowup avoids floating-point operations to eliminate the unwanted rounding
-that muddles the precision of some of the igrowup implementations:
+`jsgrowup` avoids floating-point operations to eliminate the unwanted rounding
+that muddles the precision of some of the `igrowup` implementations:
 * http://docs.sun.com/source/806-3568/ncg_goldberg.html
 
 
@@ -38,7 +38,7 @@ INSTALLATION
 EXAMPLE USAGE
 =============
 
-index.js includes a sample zscore lookup.
+`index.js` includes a sample z-score lookup.
 
 
 EXCEPTIONS
@@ -62,23 +62,26 @@ as well as more specific errors (all subclasses of `RuntimeError`):
 TESTING
 =======
 
-simple test script using vows:
-`node test.js`
+* test script using mocha:
+`mocha --delay`
 
-the included tests use example anthropometric data taken from
-demonstration data shipped with WHO's igrowup software.
-jsgrowup performs the same calculations and compares the results
+* no-framework tests:
+`node simpletests.js`
+
+The included tests use example anthropometric data taken from
+demonstration data shipped with WHO's `igrowup` software.
+`jsgrowup` performs the same calculations and compares the results
 to the WHO results.
-please see the sofware licence agreement for WHO's igrowup, which
+Please see the sofware licence agreement for WHO's `igrowup`, which
 is the source of the test data files:
 http://www.who.int/childgrowth/software/license2.pdf
 
-currently, a small number of cases fail to produce results within 1 standard
-deviation of the WHO resuts. I believe these discrepencies are due to WHO's
-use of floating point arithmetic in their igrowup software, which leads to
-less precise calculations compared to jsgrowup. In the absence of any other
+Currently, a small number of cases fail to produce results within 1 standard
+deviation of the WHO resuts. These discrepancies may be due to WHO's
+use of floating point arithmetic in their `igrowup` software, which leads to
+less precise calculations compared to `jsgrowup`. In the absence of any other
 trusted test data, please be aware that no claims are made to the
-accuracy or reliability of jsgrowup's calculations.
+accuracy or reliability of `jsgrowup`'s calculations.
 
 
 DEVELOPING
