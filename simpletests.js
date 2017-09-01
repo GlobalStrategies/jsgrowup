@@ -1,6 +1,6 @@
 // SIMPLE TESTING (no framework, just console output)
 
-const g = require('./jsgrowup');
+const g = require('./index');
 const csv = require('csvtojson');
 
 const LONG_OUTPUT = true;

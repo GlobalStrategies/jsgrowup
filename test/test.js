@@ -2,7 +2,7 @@ const assert = require('chai').assert;
 const fs = require('fs');
 const Converter = require('csvtojson').Converter;
 
-const grow = require('../jsgrowup');
+const grow = require('../index');
 
 grow.buildTablesObject(true).then((data) => {
     const whoCases = [];

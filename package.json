@@ -2,7 +2,7 @@
   "name": "jsgrowup",
   "version": "0.8.0",
   "description": "Calculate z-scores of anthropometric measurements based on WHO and CDC child growth standards; translation of pygrowup",
-  "main": "jsgrowup.js",
+  "main": "index.js",
   "scripts": {
     "test": "mocha --delay"
   },
@@ -19,5 +19,9 @@
     "eslint-config-rallycoding": "^3.2.0",
     "minimatch": "^3.0.2",
     "mocha": "^3.5.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GlobalStrategies/jsgrowup.git"
   }
 }
