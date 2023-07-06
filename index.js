@@ -192,7 +192,7 @@ function buildTablesObject(includeCdc = false) {
                     'bmifa_boys_2_20',
                     'bmifa_girls_2_20'];
 
-                const getCdcFilePath = tableName => `./tables/${tableName}_zscores.cdc.json`;
+                const getCdcFilePath = tableName => `${__dirname}/tables/${tableName}_zscores.cdc.json`;
                 const loadCdcFiles = R.pipe(getCdcFilePath, R.pipeP(fs.readFile, JSON.parse));
                 return Promise.all(R.map(loadCdcFiles, cdcTableNames))
                     .then(R.map(reIndex))
